@@ -6,7 +6,7 @@
 
 class WorkerPool {
 public:
-  WorkerPool(const uint32_t workers = std::thread::hardware_concurrency())
+  WorkerPool(const uint32_t workers = std::max(1, std::thread::hardware_concurrency() - 1))
       : processing_(true) {
     for (uint32_t i = 1; i <= workers; i++) {
       std::thread t([this]() { process_(); });
