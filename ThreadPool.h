@@ -4,22 +4,22 @@
 #include <queue>
 #include <thread>
 
-class WorkerPool {
+class ThreadPool {
 public:
-  WorkerPool(const uint32_t workers = std::max(1, std::thread::hardware_concurrency() - 1))
+  ThreadPool(const uint32_t workers = std::max(1, std::thread::hardware_concurrency() - 1))
       : processing_(true) {
     for (uint32_t i = 1; i <= workers; i++) {
-      std::thread t([this]() { process_(); });
-      worker_pool_.push_back(move(t));
+      std::thread worker([this]() { process_(); });
+      thread_pool_.push_back(move(worker));
     }
   }
 
-  WorkerPool(const WorkerPool &) = delete;
+  ThreadPool(const ThreadPool &) = delete;
 
-  ~WorkerPool() {
+  ~ThreadPool() {
     processing_ = false;
     cv_.notify_all();
-    for (auto &worker : worker_pool_) {
+    for (auto &worker : thread_pool_) {
       if (worker.joinable()) {
         worker.join();
       }
@@ -35,7 +35,7 @@ public:
 
 private:
   std::queue<std::function<void()>> task_queue_;
-  std::vector<std::thread> worker_pool_;
+  std::vector<std::thread> thread_pool_;
   std::mutex m_;
   std::condition_variable cv_;
   std::atomic_bool processing_;
